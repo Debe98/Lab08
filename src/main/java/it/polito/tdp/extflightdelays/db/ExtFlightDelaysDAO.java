@@ -10,6 +10,7 @@ import java.util.List;
 
 import it.polito.tdp.extflightdelays.model.Airline;
 import it.polito.tdp.extflightdelays.model.Airport;
+import it.polito.tdp.extflightdelays.model.Collegamento;
 import it.polito.tdp.extflightdelays.model.Flight;
 
 public class ExtFlightDelaysDAO {
@@ -80,6 +81,62 @@ public class ExtFlightDelaysDAO {
 						rs.getDouble("ELAPSED_TIME"), rs.getInt("DISTANCE"),
 						rs.getTimestamp("ARRIVAL_DATE").toLocalDateTime(), rs.getDouble("ARRIVAL_DELAY"));
 				result.add(flight);
+			}
+
+			conn.close();
+			return result;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Errore connessione al database");
+			throw new RuntimeException("Error Connection Database");
+		}
+	}
+	
+	public List<Collegamento> loadCollegamentiAndata() {
+		String sql = "SELECT flights.ORIGIN_AIRPORT_ID, flights.DESTINATION_AIRPORT_ID, SUM(flights.DISTANCE) AS TotDistance, COUNT(flights.DISTANCE) AS Cnt\r\n" + 
+				"FROM flights\r\n" + 
+				"WHERE ORIGIN_AIRPORT_ID < flights.DESTINATION_AIRPORT_ID\r\n" + 
+				"GROUP BY flights.ORIGIN_AIRPORT_ID, flights.DESTINATION_AIRPORT_ID;";
+		List<Collegamento> result = new LinkedList<>();
+
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				Collegamento coll = new Collegamento ( rs.getInt("ORIGIN_AIRPORT_ID"),
+						rs.getInt("DESTINATION_AIRPORT_ID"), rs.getInt("TotDistance"), rs.getInt("Cnt"));
+				result.add(coll);
+			}
+
+			conn.close();
+			return result;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Errore connessione al database");
+			throw new RuntimeException("Error Connection Database");
+		}
+	}
+	
+	public List<Collegamento> loadCollegamentiRitorno() {
+		String sql = "SELECT flights.ORIGIN_AIRPORT_ID, flights.DESTINATION_AIRPORT_ID, SUM(flights.DISTANCE) AS TotDistance, COUNT(flights.DISTANCE) AS Cnt\r\n" + 
+				"FROM flights\r\n" + 
+				"WHERE ORIGIN_AIRPORT_ID > flights.DESTINATION_AIRPORT_ID\r\n" + 
+				"GROUP BY flights.ORIGIN_AIRPORT_ID, flights.DESTINATION_AIRPORT_ID;";
+		List<Collegamento> result = new LinkedList<>();
+
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				Collegamento coll = new Collegamento ( rs.getInt("ORIGIN_AIRPORT_ID"),
+						rs.getInt("DESTINATION_AIRPORT_ID"), rs.getInt("TotDistance"), rs.getInt("Cnt"));
+				result.add(coll);
 			}
 
 			conn.close();
